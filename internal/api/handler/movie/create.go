@@ -1,34 +1,25 @@
 package movie
 
 import (
-	"time"
-
-	"github.com/Shahrzad-Taherzadeh/cinemaTicket/internal/model"
-	"github.com/Shahrzad-Taherzadeh/cinemaTicket/internal/service/movie"
 	"github.com/gofiber/fiber/v2"
+	"github.com/Shahrzad-Taherzadeh/cinemaTicket/internal/model"
 )
 
-type MovieHandler struct {
-	service *movie.Service
-}
+func (h *Handler) Create(c *fiber.Ctx) error {
+	var input model.Movie
 
-func NewMovieHandler(s *movie.Service) *MovieHandler {
-	return &MovieHandler{service: s}
-}
-
-func (h *MovieHandler) Create(c *fiber.Ctx) error {
-	var req model.Movie
-
-	if err := c.BodyParser(&req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
 	}
 
-	req.CreatedAt = time.Now()
-	req.UpdatedAt = time.Now()
-
-	if err := h.service.Create(&req); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	movie, err := h.service.Create(input)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(req)
+	return c.Status(fiber.StatusCreated).JSON(movie)
 }
