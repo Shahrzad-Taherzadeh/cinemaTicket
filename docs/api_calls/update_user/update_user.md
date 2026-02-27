@@ -43,8 +43,8 @@
   "message": "User name updated successfully",
   "data": {
     "id": 1,
-    "name": "John Doe",
-    "phone": "09129999999"
+    "name": "Shahrzad",
+    "phone": "09339414858"
   }
 }
 ```

@@ -2,9 +2,9 @@
 
 ## 1. Retrieve Movies
 
+* **Query Params:** None
 * **URL:** `http://localhost:8080/api/movies`
 * **Method:** `GET`
-* **Query Params:** None
 * **Headers:**
 
   * `Content-Type: application/json`
@@ -48,5 +48,14 @@
 {
   "message": "Failed to fetch movies",
   "error": "memory retrieval or internal error details"
+}
+```
+* **Status Code:** 404 Not Found
+* **Body (JSON):**
+
+```json
+{
+  "message": "No movies found",
+  "error": "movie list is empty"
 }
 ```
