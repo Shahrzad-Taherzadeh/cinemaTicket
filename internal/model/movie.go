@@ -13,8 +13,3 @@ type Movie struct {
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
-
-// Duration returns the total duration of the session
-func (m *Movie) Duration() time.Duration {
-	return time.Duration(m.DurationMinutes) * time.Minute
-}
