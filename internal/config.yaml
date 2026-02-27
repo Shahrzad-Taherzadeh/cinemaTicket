@@ -1,0 +1,15 @@
+debug: true
+
+api:
+  listenAddress: "0.0.0.0"
+  listenPort: 8080
+
+  contentType:
+    required: true
+    allowed: "application/json"
+
+  cors:
+    allowedOrigins: "*"
+    allowedMethods: "GET,POST,PUT,PATCH,DELETE"
+    allowedHeaders: "Content-Type"
+    allowCredentials: false
