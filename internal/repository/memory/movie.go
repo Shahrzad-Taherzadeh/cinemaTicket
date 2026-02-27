@@ -2,78 +2,96 @@ package memory
 
 import (
 	"errors"
-	"time"
+	"sort"
+	"sync"
 
 	"github.com/Shahrzad-Taherzadeh/cinemaTicket/internal/model"
 )
 
-type MovieRepository struct {
-	store *Store
+var ErrMovieNotFound = errors.New("movie not found")
+
+type MovieRepository interface {
+	Create(movie model.Movie) (model.Movie, error)
+	GetByID(id int) (model.Movie, error)
+	GetAll() ([]model.Movie, error)
+	Update(id int, movie model.Movie) (model.Movie, error)
+	Delete(id int) error
 }
 
-func NewMovieRepository(store *Store) *MovieRepository {
-	return &MovieRepository{store: store}
+type movieRepository struct {
+	mu     sync.RWMutex
+	data   map[int]model.Movie
+	nextID int
 }
 
-func (r *MovieRepository) Create(m *model.Movie) error {
-	r.store.mu.Lock()
-	defer r.store.mu.Unlock()
-
-	id := r.store.GenerateID("movie")
-	m.ID = id
-	m.CreatedAt = time.Now()
-	m.UpdatedAt = time.Now()
-
-	r.store.Movies[id] = m
-	return nil
+func NewMovieRepository() MovieRepository {
+	return &movieRepository{
+		data:   make(map[int]model.Movie),
+		nextID: 1,
+	}
 }
 
-func (r *MovieRepository) GetByID(id int) (*model.Movie, error) {
-	r.store.mu.Lock()
-	defer r.store.mu.Unlock()
+func (r *movieRepository) Create(movie model.Movie) (model.Movie, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-	movie, ok := r.store.Movies[id]
+	movie.ID = r.nextID
+	r.nextID++
+
+	r.data[movie.ID] = movie
+	return movie, nil
+}
+
+func (r *movieRepository) GetByID(id int) (model.Movie, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	movie, ok := r.data[id]
 	if !ok {
-		return nil, errors.New("Movie not found")
+		return model.Movie{}, ErrMovieNotFound
 	}
 	return movie, nil
 }
 
-func (r *MovieRepository) GetList() ([]*model.Movie, error) {
-	r.store.mu.Lock()
-	defer r.store.mu.Unlock()
+func (r *movieRepository) GetAll() ([]model.Movie, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
-	var moviesList []*model.Movie
-	for _, m := range r.store.Movies {
-		moviesList = append(moviesList, m)
+	movies := make([]model.Movie, 0, len(r.data))
+	for _, m := range r.data {
+		movies = append(movies, m)
 	}
-	return moviesList, nil
 
+	// sort by ID ascending
+	sort.Slice(movies, func(i, j int) bool {
+		return movies[i].ID < movies[j].ID
+	})
+
+	return movies, nil
 }
 
-func (r *MovieRepository) UpdateMovie(m *model.Movie) error {
-	r.store.mu.Lock()
-	defer r.store.mu.Unlock()
+func (r *movieRepository) Update(id int, movie model.Movie) (model.Movie, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-	_, ok := r.store.Movies[m.ID]
+	_, ok := r.data[id]
 	if !ok {
-		return errors.New("Movie not found")
+		return model.Movie{}, ErrMovieNotFound
 	}
 
-	m.UpdatedAt = time.Now()
-	r.store.Movies[m.ID] = m
-	return nil
+	movie.ID = id
+	r.data[id] = movie
+	return movie, nil
 }
 
-func (r *MovieRepository) DeleteMovie(id int) error {
-	r.store.mu.Lock()
-	defer r.store.mu.Unlock()
+func (r *movieRepository) Delete(id int) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-	_, ok := r.store.Movies[id]
-	if !ok {
-		return errors.New("Movie not found")
+	if _, ok := r.data[id]; !ok {
+		return ErrMovieNotFound
 	}
 
-	delete(r.store.Movies, id)
+	delete(r.data, id)
 	return nil
 }
