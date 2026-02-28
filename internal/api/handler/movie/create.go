@@ -5,6 +5,16 @@ import (
 	"github.com/Shahrzad-Taherzadeh/cinemaTicket/internal/model"
 )
 
+// @Summary Create a new movie
+// @Description Create a new movie with the provided details
+// @Tags Movies
+// @Accept json
+// @Produce json
+// @Param movie body model.Movie true "Movie payload"
+// @Success 201 {object} model.Movie
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /movies [post]
 func (h *Handler) Create(c *fiber.Ctx) error {
 	var input model.Movie
 
